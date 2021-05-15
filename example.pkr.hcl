@@ -1,12 +1,18 @@
-data "sshkey-sshkey" "sshkey" {
+data "sshkey-sshkey" "example" {
 }
 
 source "null" "example" {
-  ssh_host = "127.0.0.1"
-  ssh_username = "foo"
-  ssh_private_key_file = data.sshkey-sshkey.sshkey.private_key_path
+  communicator = "none"
 }
 
 build {
   sources = ["sources.null.example"]
+  provisioner "shell-local" {
+    inline = [
+      "echo PUBLIC KEY:",
+      "echo ${data.sshkey-sshkey.example.public_key}",
+      "echo PRIVATE KEY \\(${data.sshkey-sshkey.example.private_key_path}\\):",
+      "cat ${data.sshkey-sshkey.example.private_key_path}",
+    ]
+  }
 }
