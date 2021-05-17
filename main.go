@@ -16,7 +16,7 @@ var (
 
 func main() {
 	pps := plugin.NewSet()
-	pps.RegisterDatasource("sshkey", new(sshkey.Datasource))
+	pps.RegisterDatasource(plugin.DEFAULT_NAME, new(sshkey.Datasource))
 	pps.SetVersion(PluginVersion)
 	err := pps.Run()
 	if err != nil {
