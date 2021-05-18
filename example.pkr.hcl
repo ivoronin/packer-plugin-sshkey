@@ -1,4 +1,4 @@
-data "sshkey-sshkey" "example" {
+data "sshkey" "example" {
 }
 
 source "null" "example" {
@@ -10,9 +10,9 @@ build {
   provisioner "shell-local" {
     inline = [
       "echo PUBLIC KEY:",
-      "echo ${data.sshkey-sshkey.example.public_key}",
-      "echo PRIVATE KEY \\(${data.sshkey-sshkey.example.private_key_path}\\):",
-      "cat ${data.sshkey-sshkey.example.private_key_path}",
+      "echo ${data.sshkey.example.public_key}",
+      "echo PRIVATE KEY \\(${data.sshkey.example.private_key_path}\\):",
+      "cat ${data.sshkey.example.private_key_path}",
     ]
   }
 }

@@ -14,15 +14,15 @@ packer {
   }
 }
 
-data "sshkey-sshkey" "install" {
+data "sshkey" "install" {
 }
 
 source "qemu" "install" {
   ssh_username              = "root"
-  ssh_private_key_file      = data.sshkey-sshkey.install.private_key_path
+  ssh_private_key_file      = data.sshkey.install.private_key_path
   ssh_clear_authorized_keys = true
   http_content = {
-    "/install.conf" = templatefile("install.conf.pkrtpl", { "ssh_public_key" : data.sshkey-sshkey.install.public_key })
+    "/install.conf" = templatefile("install.conf.pkrtpl", { "ssh_public_key" : data.sshkey.install.public_key })
   }
   <...>
 }
