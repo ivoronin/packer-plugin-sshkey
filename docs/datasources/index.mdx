@@ -1,0 +1,63 @@
+---
+description: Datasource used to generate SSH keys
+page_title: SSH Key
+nav_title: SSH Key
+sidebar_title: SSH Key
+---
+
+# SSH Key plugin
+
+## How to use this plugin
+
+From Packer v1.7.3, copy and paste this code into your Packer configuration to install this plugin.
+Then, run [`packer init`](/docs/commands/init)nstall.conf.
+
+```hcl
+packer {
+  required_plugins {
+    sshkey = {
+      version = ">= 0.1.0"
+      source = "github.com/ivoronin/sshkey"
+    }
+  }
+}
+```
+
+## Parameters and output
+
+### Optional
+
+  - `name` (string) - Key name, **must be unique** across `sshkey` datasource instances. Defaults to "packer".
+
+## Output data
+
+  - `public_key` (string) - SSH public key in "ssh-rsa ..." format
+  - `private_key_path` (string) - Path to SSH private key
+
+## Example
+
+```hcl
+data "sshkey" "install" {
+}
+
+source "qemu" "install" {
+  ssh_username              = "root"
+  ssh_private_key_file      = data.sshkey.install.private_key_path
+  ssh_clear_authorized_keys = true
+  http_content = {
+    "/preseed.cfg" = templatefile("preseed.cfg.pkrtpl", {
+        "ssh_public_key" : data.sshkey.install.public_key
+    })
+  }
+  <...>
+}
+
+build {
+  sources = ["source.qemu.install"]
+}
+```
+
+## Notes
+
+  - Plugin generates 2048-bit RSA keys
+  - Private key is cached in `PACKER_CACHE_DIR` (by default "packer_cache" directory is used). If you delete cached private key it will be regenerated on next run.
