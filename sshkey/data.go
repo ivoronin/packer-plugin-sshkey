@@ -14,7 +14,6 @@ import (
 	"encoding/pem"
 	"errors"
 	"io/ioutil"
-	"fmt"
 	"os"
 	"strings"
 )
@@ -57,7 +56,7 @@ func (d *Datasource) Execute() (cty.Value, error) {
 	}
 
 	privateKeyNameSuffix := strings.ReplaceAll(keyName, string(os.PathSeparator), "_")
-	privateKeyName := fmt.Sprintf("%s_%s.pem", "ssh_private_key", privateKeyNameSuffix)
+	privateKeyName := "ssh_private_key_" + privateKeyNameSuffix + ".pem"
 
 	privateKeyPath, err := packer.CachePath(privateKeyName)
 
@@ -86,7 +85,7 @@ func (d *Datasource) Execute() (cty.Value, error) {
 
 	output := DatasourceOutput{
 		PrivateKeyPath: privateKeyPath,
-		PublicKey: fmt.Sprintf("%s %s", publicKeyString, keyName),
+		PublicKey: publicKeyString + " " + keyName,
 	}
 	return hcl2helper.HCL2ValueFromConfig(output, d.OutputSpec()), nil
 }
