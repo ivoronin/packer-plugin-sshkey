@@ -2,17 +2,17 @@
 package sshkey
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
+	"errors"
 	"github.com/hashicorp/hcl/v2/hcldec"
 	"github.com/hashicorp/packer-plugin-sdk/hcl2helper"
 	"github.com/hashicorp/packer-plugin-sdk/packer"
 	"github.com/hashicorp/packer-plugin-sdk/template/config"
 	"github.com/zclconf/go-cty/cty"
-	"crypto/rsa"
-	"crypto/x509"
-	"crypto/rand"
 	"golang.org/x/crypto/ssh"
-	"encoding/pem"
-	"errors"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -28,7 +28,7 @@ type Datasource struct {
 
 type DatasourceOutput struct {
 	PrivateKeyPath string `mapstructure:"private_key_path"`
-	PublicKey  string `mapstructure:"public_key"`
+	PublicKey      string `mapstructure:"public_key"`
 }
 
 func (d *Datasource) Configure(raws ...interface{}) error {
@@ -85,7 +85,7 @@ func (d *Datasource) Execute() (cty.Value, error) {
 
 	output := DatasourceOutput{
 		PrivateKeyPath: privateKeyPath,
-		PublicKey: publicKeyString + " " + keyName,
+		PublicKey:      publicKeyString + " " + keyName,
 	}
 	return hcl2helper.HCL2ValueFromConfig(output, d.OutputSpec()), nil
 }
