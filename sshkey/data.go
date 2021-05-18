@@ -14,9 +14,13 @@ import (
 	"encoding/pem"
 	"errors"
 	"io/ioutil"
+	"fmt"
+	"os"
+	"strings"
 )
 
 type Config struct {
+	Name string `mapstructure:"name"`
 }
 
 type Datasource struct {
@@ -46,15 +50,22 @@ func (d *Datasource) OutputSpec() hcldec.ObjectSpec {
 
 func (d *Datasource) Execute() (cty.Value, error) {
 	var privateKey *rsa.PrivateKey
-	var privateKeyPEM []byte
 
-	privateKeyPath, err := packer.CachePath("ssh_private_key.pem")
+	keyName := d.config.Name
+	if keyName == "" {
+		keyName = "packer"
+	}
+
+	privateKeyNameSuffix := strings.ReplaceAll(keyName, string(os.PathSeparator), "_")
+	privateKeyName := fmt.Sprintf("%s_%s.pem", "ssh_private_key", privateKeyNameSuffix)
+
+	privateKeyPath, err := packer.CachePath(privateKeyName)
 
 	if err != nil {
 		return cty.NullVal(cty.EmptyObject), err
 	}
 
-	privateKeyPEM, err = ioutil.ReadFile(privateKeyPath)
+	privateKeyPEM, err := ioutil.ReadFile(privateKeyPath)
 	if err != nil {
 		privateKey, err = generatePrivateKey(2048)
 		if err != nil {
@@ -75,7 +86,7 @@ func (d *Datasource) Execute() (cty.Value, error) {
 
 	output := DatasourceOutput{
 		PrivateKeyPath: privateKeyPath,
-		PublicKey: publicKeyString,
+		PublicKey: fmt.Sprintf("%s %s", publicKeyString, keyName),
 	}
 	return hcl2helper.HCL2ValueFromConfig(output, d.OutputSpec()), nil
 }
@@ -129,6 +140,7 @@ func generatePublicKeyString(publicKey *rsa.PublicKey) (string, error) {
 	}
 
 	keyBytes := ssh.MarshalAuthorizedKey(rsaKey)
+	keyString := strings.TrimRight(string(keyBytes[:]), "\r\n")
 
-	return string(keyBytes[:]), nil
+	return keyString, nil
 }

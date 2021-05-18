@@ -34,7 +34,7 @@ build {
 Run `packer init` to automatically download and install plugin.
 
 ## Arguments
-None at the moment
+  - `name` (default: "packer") - Key name, *should be unique across `sshkey` datasources*.
 
 ## Attributes
   - `public_key` - SSH public key in "ssh-rsa ..." format
