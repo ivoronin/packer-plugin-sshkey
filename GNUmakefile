@@ -18,7 +18,7 @@ dev: build
 	@mv ${BINARY} ~/.packer.d/plugins/${BINARY}
 
 run-example: dev
-	@packer build example.pkr.hcl
+	@packer build sshkey/test-fixtures/template.pkr.hcl
 
 test:
 	@go test -count $(COUNT) $(TEST) -timeout=3m
