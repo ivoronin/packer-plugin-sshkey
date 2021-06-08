@@ -72,6 +72,9 @@ func (d *Datasource) Execute() (cty.Value, error) {
 		}
 		privateKeyPEM = encodePrivateKeyToPEM(privateKey)
 		err = ioutil.WriteFile(privateKeyPath, privateKeyPEM, 0600)
+		if err != nil {
+			return cty.NullVal(cty.EmptyObject), err
+		}
 	} else {
 		privateKey, err = decodePrivateKeyFromPEM(privateKeyPEM)
 		if err != nil {
