@@ -32,10 +32,10 @@ type DatasourceOutput struct {
 }
 
 func (d *Datasource) Configure(raws ...interface{}) error {
-	err := config.Decode(&d.config, nil, raws...)
-	if err != nil {
+	if err := config.Decode(&d.config, nil, raws...); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -60,25 +60,22 @@ func (d *Datasource) Execute() (cty.Value, error) {
 	privateKeyName := "ssh_private_key_" + privateKeyNameSuffix + ".pem"
 
 	privateKeyPath, err := packer.CachePath(privateKeyName)
-
 	if err != nil {
 		return cty.NullVal(cty.EmptyObject), err
 	}
 
 	privateKeyPEM, err := ioutil.ReadFile(privateKeyPath)
 	if err == nil {
-		privateKey, err = decodePrivateKeyFromPEM(privateKeyPEM)
-		if err != nil {
+		if privateKey, err = decodePrivateKeyFromPEM(privateKeyPEM); err != nil {
 			return cty.NullVal(cty.EmptyObject), err
 		}
 	} else if errors.Is(err, os.ErrNotExist) {
-		privateKey, err = generatePrivateKey(2048)
-		if err != nil {
+		if privateKey, err = generatePrivateKey(2048); err != nil {
 			return cty.NullVal(cty.EmptyObject), err
 		}
+
 		privateKeyPEM = encodePrivateKeyToPEM(privateKey)
-		err = ioutil.WriteFile(privateKeyPath, privateKeyPEM, 0600)
-		if err != nil {
+		if err = ioutil.WriteFile(privateKeyPath, privateKeyPEM, 0600); err != nil {
 			return cty.NullVal(cty.EmptyObject), err
 		}
 	} else {
@@ -94,6 +91,7 @@ func (d *Datasource) Execute() (cty.Value, error) {
 		PrivateKeyPath: privateKeyPath,
 		PublicKey:      publicKeyString + " " + keyName,
 	}
+
 	return hcl2helper.HCL2ValueFromConfig(output, d.OutputSpec()), nil
 }
 
@@ -103,8 +101,7 @@ func generatePrivateKey(bitSize int) (*rsa.PrivateKey, error) {
 		return nil, err
 	}
 
-	err = privateKey.Validate()
-	if err != nil {
+	if err := privateKey.Validate(); err != nil {
 		return nil, err
 	}
 
@@ -113,7 +110,6 @@ func generatePrivateKey(bitSize int) (*rsa.PrivateKey, error) {
 
 func encodePrivateKeyToPEM(privateKey *rsa.PrivateKey) []byte {
 	privDER := x509.MarshalPKCS1PrivateKey(privateKey)
-
 	privBlock := pem.Block{
 		Type:    "RSA PRIVATE KEY",
 		Headers: nil,
