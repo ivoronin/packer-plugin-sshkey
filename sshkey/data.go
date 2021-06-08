@@ -2,21 +2,24 @@
 package sshkey
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
+	"errors"
 	"github.com/hashicorp/hcl/v2/hcldec"
 	"github.com/hashicorp/packer-plugin-sdk/hcl2helper"
 	"github.com/hashicorp/packer-plugin-sdk/packer"
 	"github.com/hashicorp/packer-plugin-sdk/template/config"
 	"github.com/zclconf/go-cty/cty"
-	"crypto/rsa"
-	"crypto/x509"
-	"crypto/rand"
 	"golang.org/x/crypto/ssh"
-	"encoding/pem"
-	"errors"
 	"io/ioutil"
+	"os"
+	"strings"
 )
 
 type Config struct {
+	Name string `mapstructure:"name"`
 }
 
 type Datasource struct {
@@ -25,14 +28,14 @@ type Datasource struct {
 
 type DatasourceOutput struct {
 	PrivateKeyPath string `mapstructure:"private_key_path"`
-	PublicKey  string `mapstructure:"public_key"`
+	PublicKey      string `mapstructure:"public_key"`
 }
 
 func (d *Datasource) Configure(raws ...interface{}) error {
-	err := config.Decode(&d.config, nil, raws...)
-	if err != nil {
+	if err := config.Decode(&d.config, nil, raws...); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -46,28 +49,39 @@ func (d *Datasource) OutputSpec() hcldec.ObjectSpec {
 
 func (d *Datasource) Execute() (cty.Value, error) {
 	var privateKey *rsa.PrivateKey
-	var privateKeyPEM []byte
+	var err error
 
-	privateKeyPath, err := packer.CachePath("ssh_private_key.pem")
+	keyName := d.config.Name
+	if keyName == "" {
+		keyName = "packer"
+	}
 
+	privateKeyNameSuffix := strings.ReplaceAll(keyName, string(os.PathSeparator), "_")
+	privateKeyName := "ssh_private_key_" + privateKeyNameSuffix + ".pem"
+
+	privateKeyPath, err := packer.CachePath(privateKeyName)
 	if err != nil {
 		return cty.NullVal(cty.EmptyObject), err
 	}
 
-	privateKeyPEM, err = ioutil.ReadFile(privateKeyPath)
-	if err != nil {
-		privateKey, err = generatePrivateKey(2048)
-		if err != nil {
+	privateKeyPEM, err := ioutil.ReadFile(privateKeyPath)
+	if err == nil {
+		if privateKey, err = decodePrivateKeyFromPEM(privateKeyPEM); err != nil {
 			return cty.NullVal(cty.EmptyObject), err
 		}
+	} else if errors.Is(err, os.ErrNotExist) {
+		if privateKey, err = generatePrivateKey(2048); err != nil {
+			return cty.NullVal(cty.EmptyObject), err
+		}
+
 		privateKeyPEM = encodePrivateKeyToPEM(privateKey)
-		err = ioutil.WriteFile(privateKeyPath, privateKeyPEM, 0600)
-	} else {
-		privateKey, err = decodePrivateKeyFromPEM(privateKeyPEM)
-		if err != nil {
+		if err = ioutil.WriteFile(privateKeyPath, privateKeyPEM, 0600); err != nil {
 			return cty.NullVal(cty.EmptyObject), err
 		}
+	} else {
+		return cty.NullVal(cty.EmptyObject), err
 	}
+
 	publicKeyString, err := generatePublicKeyString(&privateKey.PublicKey)
 	if err != nil {
 		return cty.NullVal(cty.EmptyObject), err
@@ -75,8 +89,9 @@ func (d *Datasource) Execute() (cty.Value, error) {
 
 	output := DatasourceOutput{
 		PrivateKeyPath: privateKeyPath,
-		PublicKey: publicKeyString,
+		PublicKey:      publicKeyString + " " + keyName,
 	}
+
 	return hcl2helper.HCL2ValueFromConfig(output, d.OutputSpec()), nil
 }
 
@@ -86,8 +101,7 @@ func generatePrivateKey(bitSize int) (*rsa.PrivateKey, error) {
 		return nil, err
 	}
 
-	err = privateKey.Validate()
-	if err != nil {
+	if err := privateKey.Validate(); err != nil {
 		return nil, err
 	}
 
@@ -96,7 +110,6 @@ func generatePrivateKey(bitSize int) (*rsa.PrivateKey, error) {
 
 func encodePrivateKeyToPEM(privateKey *rsa.PrivateKey) []byte {
 	privDER := x509.MarshalPKCS1PrivateKey(privateKey)
-
 	privBlock := pem.Block{
 		Type:    "RSA PRIVATE KEY",
 		Headers: nil,
@@ -111,7 +124,7 @@ func encodePrivateKeyToPEM(privateKey *rsa.PrivateKey) []byte {
 func decodePrivateKeyFromPEM(privateKeyPEM []byte) (*rsa.PrivateKey, error) {
 	block, _ := pem.Decode(privateKeyPEM)
 	if block == nil || block.Type != "RSA PRIVATE KEY" {
-		return nil, errors.New("Unable to decode PEM")
+		return nil, errors.New("unable to decode PEM")
 	}
 
 	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
@@ -129,6 +142,7 @@ func generatePublicKeyString(publicKey *rsa.PublicKey) (string, error) {
 	}
 
 	keyBytes := ssh.MarshalAuthorizedKey(rsaKey)
+	keyString := strings.TrimRight(string(keyBytes[:]), "\r\n")
 
-	return string(keyBytes[:]), nil
+	return keyString, nil
 }
