@@ -124,7 +124,7 @@ func encodePrivateKeyToPEM(privateKey *rsa.PrivateKey) []byte {
 func decodePrivateKeyFromPEM(privateKeyPEM []byte) (*rsa.PrivateKey, error) {
 	block, _ := pem.Decode(privateKeyPEM)
 	if block == nil || block.Type != "RSA PRIVATE KEY" {
-		return nil, errors.New("Unable to decode PEM")
+		return nil, errors.New("unable to decode PEM")
 	}
 
 	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
