@@ -49,6 +49,7 @@ func (d *Datasource) OutputSpec() hcldec.ObjectSpec {
 
 func (d *Datasource) Execute() (cty.Value, error) {
 	var privateKey *rsa.PrivateKey
+	var err error
 
 	keyName := d.config.Name
 	if keyName == "" {
@@ -65,7 +66,12 @@ func (d *Datasource) Execute() (cty.Value, error) {
 	}
 
 	privateKeyPEM, err := ioutil.ReadFile(privateKeyPath)
-	if err != nil {
+	if err == nil {
+		privateKey, err = decodePrivateKeyFromPEM(privateKeyPEM)
+		if err != nil {
+			return cty.NullVal(cty.EmptyObject), err
+		}
+	} else if errors.Is(err, os.ErrNotExist) {
 		privateKey, err = generatePrivateKey(2048)
 		if err != nil {
 			return cty.NullVal(cty.EmptyObject), err
@@ -76,11 +82,9 @@ func (d *Datasource) Execute() (cty.Value, error) {
 			return cty.NullVal(cty.EmptyObject), err
 		}
 	} else {
-		privateKey, err = decodePrivateKeyFromPEM(privateKeyPEM)
-		if err != nil {
-			return cty.NullVal(cty.EmptyObject), err
-		}
+		return cty.NullVal(cty.EmptyObject), err
 	}
+
 	publicKeyString, err := generatePublicKeyString(&privateKey.PublicKey)
 	if err != nil {
 		return cty.NullVal(cty.EmptyObject), err
