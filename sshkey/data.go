@@ -2,17 +2,12 @@
 package sshkey
 
 import (
-	"crypto/rand"
-	"crypto/rsa"
-	"crypto/x509"
-	"encoding/pem"
 	"errors"
 	"github.com/hashicorp/hcl/v2/hcldec"
 	"github.com/hashicorp/packer-plugin-sdk/hcl2helper"
 	"github.com/hashicorp/packer-plugin-sdk/packer"
 	"github.com/hashicorp/packer-plugin-sdk/template/config"
 	"github.com/zclconf/go-cty/cty"
-	"golang.org/x/crypto/ssh"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -20,6 +15,7 @@ import (
 
 type Config struct {
 	Name string `mapstructure:"name"`
+	Type string `mapstructure:"type"`
 }
 
 type Datasource struct {
@@ -36,6 +32,14 @@ func (d *Datasource) Configure(raws ...interface{}) error {
 		return err
 	}
 
+	if d.config.Name == "" {
+		d.config.Name = "packer"
+	}
+
+	if d.config.Type == "" {
+		d.config.Type = "rsa"
+	}
+
 	return nil
 }
 
@@ -48,101 +52,58 @@ func (d *Datasource) OutputSpec() hcldec.ObjectSpec {
 }
 
 func (d *Datasource) Execute() (cty.Value, error) {
-	var privateKey *rsa.PrivateKey
 	var err error
+	var key SSHKey
 
-	keyName := d.config.Name
-	if keyName == "" {
-		keyName = "packer"
+	nv := cty.NullVal(cty.EmptyObject)
+
+	switch d.config.Type {
+	case "rsa":
+		key = new(RSAKey)
+	case "ed25519":
+		key = new(ED25519Key)
+	default:
+		return nv, errors.New("unsupported key type")
 	}
 
-	privateKeyNameSuffix := strings.ReplaceAll(keyName, string(os.PathSeparator), "_")
-	privateKeyName := "ssh_private_key_" + privateKeyNameSuffix + ".pem"
+	keyTag := strings.ReplaceAll(d.config.Name, string(os.PathSeparator), "_")
+	keyName := "ssh_private_key_" + keyTag + "_" + d.config.Type + ".pem"
 
-	privateKeyPath, err := packer.CachePath(privateKeyName)
+	keyPath, err := packer.CachePath(keyName)
 	if err != nil {
 		return cty.NullVal(cty.EmptyObject), err
 	}
 
-	privateKeyPEM, err := ioutil.ReadFile(privateKeyPath)
+	pem, err := ioutil.ReadFile(keyPath)
 	if err == nil {
-		if privateKey, err = decodePrivateKeyFromPEM(privateKeyPEM); err != nil {
-			return cty.NullVal(cty.EmptyObject), err
+		if err = key.FromPEM(pem); err != nil {
+			return nv, err
 		}
 	} else if errors.Is(err, os.ErrNotExist) {
-		if privateKey, err = generatePrivateKey(2048); err != nil {
-			return cty.NullVal(cty.EmptyObject), err
+		if err = key.Generate(); err != nil {
+			return nv, err
 		}
 
-		privateKeyPEM = encodePrivateKeyToPEM(privateKey)
-		if err = ioutil.WriteFile(privateKeyPath, privateKeyPEM, 0600); err != nil {
-			return cty.NullVal(cty.EmptyObject), err
+		pem, err = key.ToPEM()
+		if err != nil {
+			return nv, err
+		}
+		if err = ioutil.WriteFile(keyPath, pem, 0600); err != nil {
+			return nv, err
 		}
 	} else {
-		return cty.NullVal(cty.EmptyObject), err
+		return nv, err
 	}
 
-	publicKeyString, err := generatePublicKeyString(&privateKey.PublicKey)
+	pubKeyStr, err := key.Public()
 	if err != nil {
-		return cty.NullVal(cty.EmptyObject), err
+		return nv, err
 	}
 
 	output := DatasourceOutput{
-		PrivateKeyPath: privateKeyPath,
-		PublicKey:      publicKeyString + " " + keyName,
+		PrivateKeyPath: keyPath,
+		PublicKey:      pubKeyStr + " " + keyTag,
 	}
 
 	return hcl2helper.HCL2ValueFromConfig(output, d.OutputSpec()), nil
-}
-
-func generatePrivateKey(bitSize int) (*rsa.PrivateKey, error) {
-	privateKey, err := rsa.GenerateKey(rand.Reader, bitSize)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := privateKey.Validate(); err != nil {
-		return nil, err
-	}
-
-	return privateKey, nil
-}
-
-func encodePrivateKeyToPEM(privateKey *rsa.PrivateKey) []byte {
-	privDER := x509.MarshalPKCS1PrivateKey(privateKey)
-	privBlock := pem.Block{
-		Type:    "RSA PRIVATE KEY",
-		Headers: nil,
-		Bytes:   privDER,
-	}
-
-	privatePEM := pem.EncodeToMemory(&privBlock)
-
-	return privatePEM
-}
-
-func decodePrivateKeyFromPEM(privateKeyPEM []byte) (*rsa.PrivateKey, error) {
-	block, _ := pem.Decode(privateKeyPEM)
-	if block == nil || block.Type != "RSA PRIVATE KEY" {
-		return nil, errors.New("unable to decode PEM")
-	}
-
-	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
-	if err != nil {
-		return nil, err
-	}
-
-	return privateKey, nil
-}
-
-func generatePublicKeyString(publicKey *rsa.PublicKey) (string, error) {
-	rsaKey, err := ssh.NewPublicKey(publicKey)
-	if err != nil {
-		return "", err
-	}
-
-	keyBytes := ssh.MarshalAuthorizedKey(rsaKey)
-	keyString := strings.TrimRight(string(keyBytes[:]), "\r\n")
-
-	return keyString, nil
 }
