@@ -1,3 +1,5 @@
 packer_cache
 crash.log
 packer-plugin-sshkey
+.docs
+docs.zip
