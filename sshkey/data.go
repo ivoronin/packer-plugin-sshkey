@@ -2,8 +2,9 @@
 package sshkey
 
 import (
+	"crypto"
+	"crypto/ed25519"
 	"crypto/rand"
-	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
@@ -48,7 +49,7 @@ func (d *Datasource) OutputSpec() hcldec.ObjectSpec {
 }
 
 func (d *Datasource) Execute() (cty.Value, error) {
-	var privateKey *rsa.PrivateKey
+	var privateKey *ed25519.PrivateKey
 	var err error
 
 	keyName := d.config.Name
@@ -70,11 +71,14 @@ func (d *Datasource) Execute() (cty.Value, error) {
 			return cty.NullVal(cty.EmptyObject), err
 		}
 	} else if errors.Is(err, os.ErrNotExist) {
-		if privateKey, err = generatePrivateKey(2048); err != nil {
+		if privateKey, err = generatePrivateKey(); err != nil {
 			return cty.NullVal(cty.EmptyObject), err
 		}
 
-		privateKeyPEM = encodePrivateKeyToPEM(privateKey)
+		privateKeyPEM, err = encodePrivateKeyToPEM(privateKey)
+		if err != nil {
+			return cty.NullVal(cty.EmptyObject), err
+		}
 		if err = ioutil.WriteFile(privateKeyPath, privateKeyPEM, 0600); err != nil {
 			return cty.NullVal(cty.EmptyObject), err
 		}
@@ -82,7 +86,7 @@ func (d *Datasource) Execute() (cty.Value, error) {
 		return cty.NullVal(cty.EmptyObject), err
 	}
 
-	publicKeyString, err := generatePublicKeyString(&privateKey.PublicKey)
+	publicKeyString, err := generatePublicKeyString(privateKey.Public())
 	if err != nil {
 		return cty.NullVal(cty.EmptyObject), err
 	}
@@ -95,47 +99,46 @@ func (d *Datasource) Execute() (cty.Value, error) {
 	return hcl2helper.HCL2ValueFromConfig(output, d.OutputSpec()), nil
 }
 
-func generatePrivateKey(bitSize int) (*rsa.PrivateKey, error) {
-	privateKey, err := rsa.GenerateKey(rand.Reader, bitSize)
+func generatePrivateKey() (*ed25519.PrivateKey, error) {
+	_, privateKey, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := privateKey.Validate(); err != nil {
-		return nil, err
-	}
-
-	return privateKey, nil
+	return &privateKey, nil
 }
 
-func encodePrivateKeyToPEM(privateKey *rsa.PrivateKey) []byte {
-	privDER := x509.MarshalPKCS1PrivateKey(privateKey)
+func encodePrivateKeyToPEM(privateKey *ed25519.PrivateKey) ([]byte, error) {
+	privDER, err := x509.MarshalPKCS8PrivateKey(*privateKey)
+	if err != nil {
+		return nil, err
+	}
 	privBlock := pem.Block{
-		Type:    "RSA PRIVATE KEY",
+		Type:    "PRIVATE KEY",
 		Headers: nil,
 		Bytes:   privDER,
 	}
 
 	privatePEM := pem.EncodeToMemory(&privBlock)
 
-	return privatePEM
+	return privatePEM, nil
 }
 
-func decodePrivateKeyFromPEM(privateKeyPEM []byte) (*rsa.PrivateKey, error) {
+func decodePrivateKeyFromPEM(privateKeyPEM []byte) (*ed25519.PrivateKey, error) {
 	block, _ := pem.Decode(privateKeyPEM)
-	if block == nil || block.Type != "RSA PRIVATE KEY" {
+	if block == nil || block.Type != "PRIVATE KEY" {
 		return nil, errors.New("unable to decode PEM")
 	}
 
-	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	privateKey, err := x509.ParsePKCS8PrivateKey(block.Bytes)
 	if err != nil {
 		return nil, err
 	}
 
-	return privateKey, nil
+	return privateKey.(*ed25519.PrivateKey), nil
 }
 
-func generatePublicKeyString(publicKey *rsa.PublicKey) (string, error) {
+func generatePublicKeyString(publicKey crypto.PublicKey) (string, error) {
 	rsaKey, err := ssh.NewPublicKey(publicKey)
 	if err != nil {
 		return "", err
