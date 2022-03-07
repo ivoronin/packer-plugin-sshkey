@@ -11,7 +11,7 @@ Packer 1.7.3 or later is required.
 packer {
   required_plugins {
     sshkey = {
-      version = ">= 0.1.0"
+      version = ">= 1.0.1"
       source = "github.com/ivoronin/sshkey"
     }
   }
