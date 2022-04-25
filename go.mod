@@ -13,7 +13,7 @@ require (
 	github.com/hashicorp/go-secure-stdlib/parseutil v0.1.3 // indirect
 	github.com/hashicorp/go-secure-stdlib/strutil v0.1.2 // indirect
 	github.com/hashicorp/go-version v1.4.0 // indirect
-	github.com/hashicorp/hcl/v2 v2.11.1
+	github.com/hashicorp/hcl/v2 v2.12.0
 	github.com/hashicorp/packer-plugin-sdk v0.2.11
 	github.com/hashicorp/serf v0.9.7 // indirect
 	github.com/hashicorp/vault/api v1.4.1 // indirect
