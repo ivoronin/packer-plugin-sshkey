@@ -12,7 +12,7 @@ require (
 	github.com/hashicorp/go-secure-stdlib/parseutil v0.1.3 // indirect
 	github.com/hashicorp/go-secure-stdlib/strutil v0.1.2 // indirect
 	github.com/hashicorp/go-version v1.4.0 // indirect
-	github.com/hashicorp/hcl/v2 v2.12.0
+	github.com/hashicorp/hcl/v2 v2.13.0
 	github.com/hashicorp/packer-plugin-sdk v0.3.0
 	github.com/hashicorp/serf v0.9.7 // indirect
 	github.com/hashicorp/vault/api v1.4.1 // indirect
@@ -23,7 +23,7 @@ require (
 	github.com/oklog/run v1.1.0 // indirect
 	github.com/ugorji/go v1.2.7 // indirect
 	github.com/zclconf/go-cty v1.10.0
-	golang.org/x/crypto v0.0.0-20220427172511-eb4f295cb31f
+	golang.org/x/crypto v0.0.0-20220517005047-85d78b3ac167
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f // indirect
 	golang.org/x/sys v0.0.0-20220227234510-4e6760a101f9 // indirect
 	golang.org/x/time v0.0.0-20220224211638-0e9765cccd65 // indirect
