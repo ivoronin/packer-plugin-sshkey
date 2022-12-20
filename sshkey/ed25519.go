@@ -1,22 +1,24 @@
 package sshkey
 
 import (
+	"crypto"
 	"crypto/ed25519"
-	"crypto/x509"
 	"encoding/pem"
-	"errors"
+	"github.com/mikesmitty/edkey"
+	"golang.org/x/crypto/ssh"
 )
 
-const ED25519_BLOCK_TYPE = "PRIVATE KEY"
+const ED25519_BLOCK_TYPE = "OPENSSH PRIVATE KEY"
 
 type ED25519Key struct {
 	SSHKey
+	pubkey crypto.PublicKey
 	key ed25519.PrivateKey
 }
 
 func (k *ED25519Key) Generate() error {
 	var err error
-	_, k.key, err = ed25519.GenerateKey(nil)
+	k.pubkey, k.key, err = ed25519.GenerateKey(nil)
 	if err == nil {
 		return err
 	}
@@ -26,32 +28,24 @@ func (k *ED25519Key) Generate() error {
 
 func (k *ED25519Key) FromPEM(bytes []byte) error {
 	var err error
-	block, _ := pem.Decode(bytes)
-	if block == nil || block.Type != ED25519_BLOCK_TYPE {
-		return errors.New("unable to decode PEM")
-	}
 
-	key, err := x509.ParsePKCS8PrivateKey(block.Bytes)
-	k.key = key.(ed25519.PrivateKey)
-	if err != nil {
-		return err
-	}
+	key, err := ssh.ParseRawPrivateKey(bytes)
+	if err != nil { return err }
+
+	k.key = *key.(*ed25519.PrivateKey)
+	k.pubkey = k.key.Public()
 	return nil
 }
 
 func (k *ED25519Key) ToPEM() ([]byte, error) {
-	der, err := x509.MarshalPKCS8PrivateKey(k.key)
-	if err != nil {
-		return nil, err
-	}
 	block := pem.Block{
 		Type:  ED25519_BLOCK_TYPE,
-		Bytes: der,
+		Bytes: edkey.MarshalED25519PrivateKey(k.key),
 	}
 	pem := pem.EncodeToMemory(&block)
 	return pem, nil
 }
 
 func (k *ED25519Key) Public() (string, error) {
-	return publicKeyStringFor(k.key.Public())
+	return publicKeyStringFor(k.pubkey)
 }
