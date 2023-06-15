@@ -1,0 +1,52 @@
+Type: `sshkey`
+
+Datasource used to generate SSH keys
+
+## Parameters and output
+
+### Optional
+
+  - `name` (string) - Key name, **must be unique** across `sshkey` datasource instances. Defaults to `packer`.
+  - `type` (string) - Key type, must be either `rsa` or `ed25519`. Defaults to `rsa`.
+
+## Output data
+
+  - `public_key` (string) - SSH public key in "ssh-rsa ..." format
+  - `private_key_path` (string) - Path to SSH private key
+
+## Example
+
+```hcl
+packer {
+  required_plugins {
+    sshkey = {
+      version = ">= 1.0.1"
+      source = "github.com/ivoronin/sshkey"
+    }
+  }
+}
+
+data "sshkey" "install" {
+}
+
+source "qemu" "install" {
+  ssh_username              = "root"
+  ssh_private_key_file      = data.sshkey.install.private_key_path
+  ssh_clear_authorized_keys = true
+  http_content = {
+    "/preseed.cfg" = templatefile("preseed.cfg.pkrtpl", {
+        "ssh_public_key" : data.sshkey.install.public_key
+    })
+  }
+  <...>
+}
+
+build {
+  sources = ["source.qemu.install"]
+}
+```
+
+## Notes
+
+  - Private key is cached in `PACKER_CACHE_DIR` (by default `packer_cache` directory is used). If you delete cached private key it will be regenerated on the next run.
+  - Packer 1.7.3 or later is required
