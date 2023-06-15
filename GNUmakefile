@@ -36,5 +36,5 @@ generate: install-packer-sdc
 build-docs: install-packer-sdc
 	@if [ -d ".docs" ]; then rm -r ".docs"; fi
 	@packer-sdc renderdocs -src "docs" -partials docs-partials/ -dst ".docs/"
-	@./.web-docs/scripts/compile-to-webdocs.sh "." ".docs" ".web-docs" "hashicorp"
+	@./.web-docs/scripts/compile-to-webdocs.sh "." ".docs" ".web-docs" "ivoronin"
 	@rm -r ".docs"

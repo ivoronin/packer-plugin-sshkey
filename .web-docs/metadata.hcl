@@ -3,7 +3,7 @@
 integration {
   name = "SSH Key"
   description = "The SSHkey plugin can be used for generating SSH keys for configuring private key authentication."
-  identifier = "packer/hashicorp/sshkey"
+  identifier = "packer/ivoronin/sshkey"
   component {
     type = "data-source"
     name = "SSH Key"

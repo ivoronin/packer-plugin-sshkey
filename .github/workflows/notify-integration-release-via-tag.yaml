@@ -34,7 +34,7 @@ jobs:
       - name: Notify Release
         uses: ./integration-release-action
         with:
-          integration_identifier: 'packer/hashicorp/sshkey'
+          integration_identifier: 'packer/ivoronin/sshkey'
           release_version: ${{ github.ref_name }}
           release_sha: ${{ github.ref }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
