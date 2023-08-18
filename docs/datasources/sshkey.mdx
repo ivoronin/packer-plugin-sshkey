@@ -34,13 +34,19 @@ packer {
   }
 }
 
+variables {
+  temporary_key_pair_name = "my_temp_key"
+}
+
 data "sshkey" "install" {
+  name = var.temporary_key_pair_name
 }
 
 source "qemu" "install" {
   ssh_username              = "root"
   ssh_private_key_file      = data.sshkey.install.private_key_path
   ssh_clear_authorized_keys = true
+  temporary_key_pair_name   = var.temporary_key_pair_name
   http_content = {
     "/preseed.cfg" = templatefile("preseed.cfg.pkrtpl", {
         "ssh_public_key" : data.sshkey.install.public_key
