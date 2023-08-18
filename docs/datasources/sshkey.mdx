@@ -46,6 +46,7 @@ source "qemu" "install" {
   ssh_username              = "root"
   ssh_private_key_file      = data.sshkey.install.private_key_path
   ssh_clear_authorized_keys = true
+  // clean up SSH keys after build
   temporary_key_pair_name   = var.temporary_key_pair_name
   http_content = {
     "/preseed.cfg" = templatefile("preseed.cfg.pkrtpl", {
