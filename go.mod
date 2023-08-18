@@ -6,7 +6,7 @@ require (
 	github.com/hashicorp/hcl/v2 v2.14.1
 	github.com/hashicorp/packer-plugin-sdk v0.4.0
 	github.com/zclconf/go-cty v1.10.0
-	golang.org/x/crypto v0.9.0
+	golang.org/x/crypto v0.12.0
 )
 
 require (
@@ -63,8 +63,8 @@ require (
 	github.com/ulikunitz/xz v0.5.10 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	golang.org/x/net v0.10.0 // indirect
-	golang.org/x/sys v0.8.0 // indirect
-	golang.org/x/text v0.9.0 // indirect
+	golang.org/x/sys v0.11.0 // indirect
+	golang.org/x/text v0.12.0 // indirect
 	golang.org/x/time v0.0.0-20220224211638-0e9765cccd65 // indirect
 	google.golang.org/genproto v0.0.0-20221027153422-115e99e71e1c // indirect
 	google.golang.org/grpc v1.50.1 // indirect
