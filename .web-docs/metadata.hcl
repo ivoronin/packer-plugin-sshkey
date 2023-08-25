@@ -2,8 +2,8 @@
 # https://github.com/hashicorp/integration-template#metadata-configuration
 integration {
   name = "SSH Key"
-  description = "TODO"
-  identifier = "packer/BrandonRomano/sshkey"
+  description = "The SSHkey plugin can be used for generating SSH keys for configuring private key authentication."
+  identifier = "packer/hashicorp/sshkey"
   component {
     type = "data-source"
     name = "SSH Key"

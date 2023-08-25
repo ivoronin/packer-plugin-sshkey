@@ -8,7 +8,7 @@ nav_title: SSH Key
 
 Type: `sshkey`
 
-Datasource used to generate SSH keys
+Data source used to generate SSH keys
 
 ## Parameters and output
 
@@ -21,45 +21,6 @@ Datasource used to generate SSH keys
 
   - `public_key` (string) - SSH public key in "ssh-rsa ..." format
   - `private_key_path` (string) - Path to SSH private key
-
-## Example
-
-```hcl
-packer {
-  required_plugins {
-    sshkey = {
-      version = ">= 1.1.0"
-      source = "github.com/ivoronin/sshkey"
-    }
-  }
-}
-
-variables {
-  temporary_key_pair_name = "my_temp_key"
-}
-
-data "sshkey" "install" {
-  name = var.temporary_key_pair_name
-}
-
-source "qemu" "install" {
-  ssh_username              = "root"
-  ssh_private_key_file      = data.sshkey.install.private_key_path
-  ssh_clear_authorized_keys = true
-  // clean up SSH keys after build
-  temporary_key_pair_name   = var.temporary_key_pair_name
-  http_content = {
-    "/preseed.cfg" = templatefile("preseed.cfg.pkrtpl", {
-        "ssh_public_key" : data.sshkey.install.public_key
-    })
-  }
-  <...>
-}
-
-build {
-  sources = ["source.qemu.install"]
-}
-```
 
 ## Notes
 
