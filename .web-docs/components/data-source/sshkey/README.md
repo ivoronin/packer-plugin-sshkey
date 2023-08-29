@@ -1,11 +1,3 @@
----
-description: Datasource used to generate SSH keys
-page_title: SSH Key - Datasources
-nav_title: SSH Key
----
-
-# SSH Key
-
 Type: `sshkey`
 
 Data source used to generate SSH keys
