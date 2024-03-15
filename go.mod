@@ -1,4 +1,4 @@
-module packer-plugin-sshkey
+module github.com/ivoronin/packer-plugin-sshkey
 
 go 1.18
 

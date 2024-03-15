@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/hashicorp/packer-plugin-sdk/plugin"
 	"github.com/hashicorp/packer-plugin-sdk/version"
-	"os"
-	"packer-plugin-sshkey/sshkey"
+	"github.com/ivoronin/packer-plugin-sshkey/sshkey"
 )
 
 var (
