@@ -6,8 +6,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout 🛎
-        uses: actions/checkout@v2
-      - uses: actions/setup-go@v4
+        uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+            go-version: 1.22
       - shell: bash
         run: make generate
       - shell: bash
@@ -19,4 +21,3 @@ jobs:
             echo "Run 'make generate', and commit the result to resolve this error."
             exit 1
           fi
-

@@ -12,6 +12,10 @@ HASHICORP_PACKER_PLUGIN_SDK_VERSION?=$(shell go list -m github.com/hashicorp/pac
 build:
 	@go build -o ${BINARY}
 
+ci-release-docs: install-packer-sdc
+	@packer-sdc renderdocs -src docs -partials docs-partials/ -dst docs/
+	@/bin/sh -c "[ -d docs ] && zip -r docs.zip docs/"
+	
 dev:
 	@go build -ldflags="-X '${PLUGIN_FQN}/version.VersionPrerelease=dev'" -o '${BINARY}'
 	packer plugins install --path ${BINARY} "$(shell echo "${PLUGIN_FQN}" | sed 's/packer-plugin-//')"

@@ -18,7 +18,7 @@ builds:
     id: plugin-check
     mod_timestamp: '{{ .CommitTimestamp }}'
     flags:
-      - -trimpath #removes all file system paths from the compiled executable
+      - -trimpath  # removes all file system paths from the compiled executable
     ldflags:
       - '-s -w -X {{ .ModulePath }}/version.Version={{.Version}} -X {{ .ModulePath }}/version.VersionPrerelease= '
     goos:
@@ -29,7 +29,7 @@ builds:
   -
     mod_timestamp: '{{ .CommitTimestamp }}'
     flags:
-      - -trimpath #removes all file system paths from the compiled executable
+      - -trimpath  # removes all file system paths from the compiled executable
     ldflags:
       - '-s -w -X {{ .ModulePath }}/version.Version={{.Version}} -X {{ .ModulePath }}/version.VersionPrerelease= '
     goos:

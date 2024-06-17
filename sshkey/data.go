@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/packer-plugin-sdk/packer"
 	"github.com/hashicorp/packer-plugin-sdk/template/config"
 	"github.com/zclconf/go-cty/cty"
-	"io/ioutil"
 	"os"
 	"strings"
 )
@@ -74,7 +73,7 @@ func (d *Datasource) Execute() (cty.Value, error) {
 		return cty.NullVal(cty.EmptyObject), err
 	}
 
-	pem, err := ioutil.ReadFile(keyPath)
+	pem, err := os.ReadFile(keyPath)
 	if err == nil {
 		if err = key.FromPEM(pem); err != nil {
 			return nv, err
@@ -88,7 +87,7 @@ func (d *Datasource) Execute() (cty.Value, error) {
 		if err != nil {
 			return nv, err
 		}
-		if err = ioutil.WriteFile(keyPath, pem, 0600); err != nil {
+		if err = os.WriteFile(keyPath, pem, 0600); err != nil {
 			return nv, err
 		}
 	} else {
