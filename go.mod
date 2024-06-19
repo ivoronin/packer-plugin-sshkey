@@ -1,12 +1,11 @@
 module github.com/ivoronin/packer-plugin-sshkey
 
 go 1.21
-
-toolchain go1.22.3
+toolchain go1.22.4
 
 require (
 	github.com/hashicorp/hcl/v2 v2.20.1
-	github.com/hashicorp/packer-plugin-sdk v0.5.3
+	github.com/hashicorp/packer-plugin-sdk v0.5.4
 	github.com/zclconf/go-cty v1.14.4
 	golang.org/x/crypto v0.24.0
 )
