@@ -1,12 +1,10 @@
 module github.com/ivoronin/packer-plugin-sshkey
 
-go 1.21
-
-toolchain go1.22.3
+go 1.22
 
 require (
-	github.com/hashicorp/hcl/v2 v2.20.1
-	github.com/hashicorp/packer-plugin-sdk v0.5.3
+	github.com/hashicorp/hcl/v2 v2.21.0
+	github.com/hashicorp/packer-plugin-sdk v0.5.4
 	github.com/zclconf/go-cty v1.14.4
 	golang.org/x/crypto v0.24.0
 )
@@ -16,7 +14,7 @@ require (
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
-	github.com/aws/aws-sdk-go v1.53.19 // indirect
+	github.com/aws/aws-sdk-go v1.54.14 // indirect
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d // indirect
 	github.com/cenkalti/backoff/v3 v3.2.2 // indirect
 	github.com/fatih/color v1.17.0 // indirect
@@ -43,7 +41,7 @@ require (
 	github.com/hashicorp/yamux v0.1.1 // indirect
 	github.com/jehiah/go-strftime v0.0.0-20171201141054-1d33003b3869 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
-	github.com/klauspost/compress v1.17.8 // indirect
+	github.com/klauspost/compress v1.17.9 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
@@ -55,7 +53,7 @@ require (
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	github.com/ulikunitz/xz v0.5.12 // indirect
-	golang.org/x/exp v0.0.0-20240604190554-fc45aab8b7f8 // indirect
+	golang.org/x/exp v0.0.0-20240613232115-7f521ea00fb8 // indirect
 	golang.org/x/mod v0.18.0 // indirect
 	golang.org/x/net v0.26.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
