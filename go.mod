@@ -1,6 +1,6 @@
 module github.com/ivoronin/packer-plugin-sshkey
 
-go 1.22.5
+go 1.22.7
 
 require (
 	github.com/hashicorp/hcl/v2 v2.21.0
