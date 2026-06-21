@@ -1,3 +1,7 @@
+// Copyright (c) Ilya Voronin
+// SPDX-License-Identifier: MPL-2.0
+
+// Command packer-plugin-sshkey is a Packer plugin that generates SSH keys.
 package main
 
 import (
@@ -5,20 +9,15 @@ import (
 	"os"
 
 	"github.com/hashicorp/packer-plugin-sdk/plugin"
-	"github.com/hashicorp/packer-plugin-sdk/version"
 	"github.com/ivoronin/packer-plugin-sshkey/sshkey"
-)
-
-var (
-	Version           = "1.2.2"
-	VersionPrerelease = ""
-	PluginVersion     = version.NewPluginVersion(Version, VersionPrerelease, "")
+	"github.com/ivoronin/packer-plugin-sshkey/version"
 )
 
 func main() {
 	pps := plugin.NewSet()
 	pps.RegisterDatasource(plugin.DEFAULT_NAME, new(sshkey.Datasource))
-	pps.SetVersion(PluginVersion)
+	pps.SetVersion(version.PluginVersion)
+
 	err := pps.Run()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())

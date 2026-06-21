@@ -1,11 +1,16 @@
+// Copyright (c) Ilya Voronin
+// SPDX-License-Identifier: MPL-2.0
+
 package sshkey
 
 import (
 	_ "embed"
+	"errors"
 	"fmt"
-	"github.com/hashicorp/packer-plugin-sdk/acctest"
 	"os/exec"
 	"testing"
+
+	"github.com/hashicorp/packer-plugin-sdk/acctest"
 )
 
 //go:embed test-fixtures/rsa.pkr.hcl
@@ -14,15 +19,19 @@ var testDatasourceTemplateRSA string
 //go:embed test-fixtures/ed25519.pkr.hcl
 var testDatasourceTemplateED25519 string
 
+var errBadExitCode = errors.New("bad exit code")
+
 func check(buildCommand *exec.Cmd, logfile string) error {
 	if buildCommand.ProcessState != nil {
 		if buildCommand.ProcessState.ExitCode() != 0 {
-			return fmt.Errorf("Bad exit code. Logfile: %s", logfile)
+			return fmt.Errorf("%w. logfile: %s", errBadExitCode, logfile)
 		}
 	}
+
 	return nil
 }
 
+//nolint:paralleltest // acctest.TestPlugin drives Packer sequentially over a shared cache
 func TestAccSSHKeyManager(t *testing.T) {
 	testGenerateRSA := &acctest.PluginTestCase{
 		Name:     "sshkey_datasource_create_rsa",
@@ -44,6 +53,7 @@ func TestAccSSHKeyManager(t *testing.T) {
 		Template: testDatasourceTemplateED25519,
 		Check:    check,
 	}
+
 	acctest.TestPlugin(t, testGenerateRSA)
 	acctest.TestPlugin(t, testLoadRSA)
 	acctest.TestPlugin(t, testGenerateED25519)

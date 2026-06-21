@@ -1,11 +1,17 @@
+// Copyright (c) Ilya Voronin
+// SPDX-License-Identifier: MPL-2.0
+
+// Package sshkey implements a Packer data source that generates and caches SSH keys.
 package sshkey
 
 import (
 	"crypto"
-	"golang.org/x/crypto/ssh"
 	"strings"
+
+	"golang.org/x/crypto/ssh"
 )
 
+// SSHKey is the common interface implemented by RSAKey and ED25519Key.
 type SSHKey interface {
 	Generate() error
 	ToPEM() ([]byte, error)
@@ -20,7 +26,7 @@ func publicKeyStringFor(privKey crypto.PrivateKey) (string, error) {
 	}
 
 	bytes := ssh.MarshalAuthorizedKey(pubKey)
-	str := strings.TrimRight(string(bytes[:]), "\r\n")
+	str := strings.TrimRight(string(bytes), "\r\n")
 
 	return str, nil
 }

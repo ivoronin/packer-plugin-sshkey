@@ -21,13 +21,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout this repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
           ref: ${{ github.ref }}
       # Ensure that Docs are Compiled
-      - uses: actions/setup-go@v5
+      - name: Set up Go
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6
         with:
-            go-version: 1.22
+            go-version-file: 'go.mod'
       - shell: bash
         run: make generate
       - shell: bash
@@ -41,7 +42,7 @@ jobs:
           fi
       # Perform the Release
       - name: Checkout integration-release-action
-        uses: actions/checkout@v4
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
           repository: hashicorp/integration-release-action
           path: ./integration-release-action
@@ -49,6 +50,6 @@ jobs:
         uses: ./integration-release-action
         with:
           integration_identifier: 'packer/ivoronin/sshkey'
-          release_version: ${{ github.ref_name }}
+          release_version: ${{ needs.strip-version.outputs.packer-version }}
           release_sha: ${{ github.ref }}
           github_token: ${{ secrets.GITHUB_TOKEN }}

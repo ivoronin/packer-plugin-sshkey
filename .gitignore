@@ -3,3 +3,6 @@ crash.log
 packer-plugin-sshkey
 .docs
 docs.zip
+dist/
+**/packer_log*.txt
+**/git_*test.pkr.hcl

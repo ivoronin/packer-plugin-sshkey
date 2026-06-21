@@ -14,32 +14,35 @@ on:
   push:
     tags:
       - 'v*'
+permissions:
+  contents: write
+  packages: read
 jobs:
   goreleaser:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
       - name: Unshallow
         run: git fetch --prune --unshallow
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6
         with:
-          go-version: 1.22
+          go-version-file: 'go.mod'
       - name: Describe plugin
         id: plugin_describe
-        run: echo "::set-output name=api_version::$(go run . describe | jq -r '.api_version')"
+        run: echo "api_version=$(go run . describe | jq -r '.api_version')" >> "$GITHUB_OUTPUT"
       - name: Import GPG key
         id: import_gpg
-        uses: crazy-max/ghaction-import-gpg@v6
+        uses: crazy-max/ghaction-import-gpg@2dc316deee8e90f13e1a351ab510b4d5bc0c82cd # v7
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v6
+        uses: goreleaser/goreleaser-action@5daf1e915a5f0af01ddbcd89a43b8061ff4f1a89 # v7
         with:
           version: latest
-          args: release --clean
+          args: release --clean --timeout 120m
         env:
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

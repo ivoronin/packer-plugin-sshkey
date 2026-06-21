@@ -9,7 +9,7 @@ packer {
   required_plugins {
     sshkey = {
       source  = "github.com/ivoronin/sshkey"
-      version = "~> 1"
+      version = "~> 1.3"
     }
   }
 }
@@ -23,7 +23,7 @@ $ packer plugins install github.com/ivoronin/sshkey
 
 ### Components
 
-#### Builders
+#### Data Sources
 
 - [sshkey](/packer/integrations/ivoronin/sshkey/latest/components/data-source/sshkey) - Data source used to generate SSH keys
 
@@ -33,7 +33,7 @@ $ packer plugins install github.com/ivoronin/sshkey
 packer {
   required_plugins {
     sshkey = {
-      version = "~> 1"
+      version = "~> 1.3"
       source = "github.com/ivoronin/sshkey"
     }
   }
