@@ -4,6 +4,11 @@ integration {
   name = "SSH Key"
   description = "The SSHkey plugin can be used for generating SSH keys for configuring private key authentication."
   identifier = "packer/ivoronin/sshkey"
+  docs {
+    process_docs = true
+    readme_location = "./README.md"
+    external_url = "https://github.com/ivoronin/packer-plugin-sshkey"
+  }
   component {
     type = "data-source"
     name = "SSH Key"
