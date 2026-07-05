@@ -8,6 +8,7 @@ Data source used to generate SSH keys
 
   - `name` (string) - Key name, **must be unique** across `sshkey` datasource instances. Defaults to `packer`.
   - `type` (string) - Key type, must be either `rsa` or `ed25519`. Defaults to `rsa`.
+  - `cache` (string) - Key file cache behavior: `reuse` loads the existing file for the same `name` and `type`; `unique` writes a new file on every run. Defaults to `reuse`.
 
 ## Output data
 
@@ -16,14 +17,16 @@ Data source used to generate SSH keys
 
 ## Notes
 
-  - Private key is cached in `PACKER_CACHE_DIR` (by default `packer_cache` directory is used). If you delete cached private key it will be regenerated on the next run.
+  - Private key is written to `PACKER_CACHE_DIR` (by default `packer_cache` directory is used). If you delete cached private key it will be regenerated on the next run.
   - Packer 1.7.3 or later is required
 
 ## Key lifecycle and cleanup
 
-By default generated private keys stay in the Packer cache. If you run Packer again on the same machine with the same `name` and `type`, the plugin sees the same cache path and loads the existing key instead of generating a new one.
+Generated private keys stay in the Packer cache. With default `cache = "reuse"`, the same `name` and `type` maps to the same private key file, so a later Packer run on the same machine loads it instead of generating a new key.
 
-Temporary SSH keys are not automatically removed at the end of the build because Packer does not give data sources an end-of-build cleanup step. So cleanup has to live in the Packer template, where Packer already has a local execution step.
+Set `cache = "unique"` if you need a fresh key on every run. It still writes under `PACKER_CACHE_DIR`; it just chooses a new private key file each time. This avoids key reuse, but also leaves a new file behind after every run unless you clean it up.
+
+The data source cannot delete the key by itself at the end of the build. Put cleanup into the Packer template, where Packer already has local execution steps for successful and failed builds.
 
 For successful builds, add a final `shell-local` post-processor inside the `build` block:
 

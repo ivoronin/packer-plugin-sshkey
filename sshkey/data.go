@@ -6,7 +6,9 @@ package sshkey
 
 import (
 	"errors"
+	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/hashicorp/hcl/v2/hcldec"
@@ -16,12 +18,23 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-var errUnsupportedKeyType = errors.New("unsupported key type")
+var (
+	errUnsupportedKeyType = errors.New("unsupported key type")
+	errUnsupportedCache   = errors.New("unsupported cache value")
+)
+
+const (
+	cacheReuse     = "reuse"
+	cacheUnique    = "unique"
+	keyTypeRSA     = "rsa"
+	keyTypeED25519 = "ed25519"
+)
 
 // Config holds the user-supplied HCL configuration for the sshkey data source.
 type Config struct {
-	Name string `mapstructure:"name"`
-	Type string `mapstructure:"type"`
+	Name  string `mapstructure:"name"`
+	Type  string `mapstructure:"type"`
+	Cache string `mapstructure:"cache"`
 }
 
 // Datasource is the Packer data source that generates or loads an SSH key pair.
@@ -47,10 +60,14 @@ func (d *Datasource) Configure(raws ...any) error {
 	}
 
 	if d.config.Type == "" {
-		d.config.Type = "rsa"
+		d.config.Type = keyTypeRSA
 	}
 
-	return nil
+	if d.config.Cache == "" {
+		d.config.Cache = cacheReuse
+	}
+
+	return validateCache(d.config.Cache)
 }
 
 // ConfigSpec returns the HCL object spec for the data source inputs.
@@ -73,14 +90,8 @@ func (d *Datasource) Execute() (cty.Value, error) {
 	}
 
 	keyTag := strings.ReplaceAll(d.config.Name, string(os.PathSeparator), "_")
-	keyName := "ssh_private_key_" + keyTag + "_" + d.config.Type + ".pem"
 
-	keyPath, err := packer.CachePath(keyName)
-	if err != nil {
-		return nullVal, err
-	}
-
-	err = loadOrGenerate(key, keyPath)
+	keyPath, err := prepareKey(key, keyTag, d.config.Type, d.config.Cache)
 	if err != nil {
 		return nullVal, err
 	}
@@ -98,12 +109,68 @@ func (d *Datasource) Execute() (cty.Value, error) {
 	return hcl2helper.HCL2ValueFromConfig(output, d.OutputSpec()), nil
 }
 
+func prepareKey(key SSHKey, keyTag string, keyType string, cache string) (string, error) {
+	switch cache {
+	case cacheUnique:
+		keyPath, err := reserveUniqueKeyPath(keyTag, keyType)
+		if err != nil {
+			return "", err
+		}
+
+		err = generateAndSave(key, keyPath)
+		if err != nil {
+			_ = os.Remove(keyPath)
+
+			return "", err
+		}
+
+		return keyPath, nil
+	case cacheReuse:
+		keyName := cacheKeyName(keyTag, keyType)
+
+		keyPath, err := packer.CachePath(keyName)
+		if err != nil {
+			return "", err
+		}
+
+		err = loadOrGenerate(key, keyPath)
+		if err != nil {
+			return "", err
+		}
+
+		return keyPath, nil
+	default:
+		return "", unsupportedCacheError(cache)
+	}
+}
+
+func validateCache(cache string) error {
+	switch cache {
+	case cacheReuse, cacheUnique:
+		return nil
+	default:
+		return unsupportedCacheError(cache)
+	}
+}
+
+func unsupportedCacheError(cache string) error {
+	return fmt.Errorf("%w %q", errUnsupportedCache, cache)
+}
+
+func cacheKeyName(keyTag string, keyType string) string {
+	return "ssh_private_key_" + keyTag + "_" + keyType + ".pem"
+}
+
+func uniqueCacheKeyPattern(keyTag string, keyType string) string {
+	return "ssh_private_key_" + keyTag + "_" + keyType + "_*.pem"
+}
+
 //nolint:ireturn // factory must return the SSHKey interface to select between RSAKey and ED25519Key
 func newKey(keyType string) (SSHKey, error) {
 	switch keyType {
-	case "rsa":
+	case keyTypeRSA:
 		return new(RSAKey), nil
-	case "ed25519":
+	case keyTypeED25519:
 		return new(ED25519Key), nil
 	default:
 		return nil, errUnsupportedKeyType
@@ -135,4 +202,27 @@ func generateAndSave(key SSHKey, keyPath string) error {
 	}
 
 	return os.WriteFile(keyPath, pemBytes, 0o600)
+}
+
+func reserveUniqueKeyPath(keyTag string, keyType string) (string, error) {
+	basePath, err := packer.CachePath(cacheKeyName(keyTag, keyType))
+	if err != nil {
+		return "", err
+	}
+
+	file, err := os.CreateTemp(filepath.Dir(basePath), uniqueCacheKeyPattern(keyTag, keyType))
+	if err != nil {
+		return "", err
+	}
+
+	keyPath := file.Name()
+
+	err = file.Close()
+	if err != nil {
+		_ = os.Remove(keyPath)
+
+		return "", err
+	}
+
+	return keyPath, nil
 }

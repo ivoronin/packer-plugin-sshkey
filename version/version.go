@@ -8,7 +8,7 @@ import "github.com/hashicorp/packer-plugin-sdk/version"
 
 var (
 	// Version is the main version number.
-	Version = "1.3.0"
+	Version = "1.4.0"
 
 	// VersionPrerelease is a marker for the version (e.g. "dev", "beta"); empty for releases.
 	VersionPrerelease = ""
